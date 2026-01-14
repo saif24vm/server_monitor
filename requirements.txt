@@ -1,0 +1,6 @@
+requests
+selenium
+webdriver-manager
+pyserial
+python-dotenv
+webdavclient3
