@@ -4,6 +4,9 @@ from datetime import datetime, timezone
 from enums import HUMAN_RANGES, STATE_LIST
 import hashlib
 
+# Store latest random state globally
+latest_state = None
+
 def random_state():
     global latest_state
     latest_state = random.choice(tuple(STATE_LIST))
@@ -11,10 +14,12 @@ def random_state():
 
 
 def now_utc_iso():
+    """Get current UTC time in ISO format."""
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def list_directory(client, remote_path="/"):
+    """List items in WebDAV directory."""
     print(f"Listing directory: {remote_path}")
     items = client.list(remote_path)
 
@@ -63,6 +68,7 @@ def manipulate_sensor_json(file_path: str) -> None:
         json.dump(data, f, indent=2)
 
 def random_vital_signs():
+    """Generate random vital signs within human ranges."""
     return {
         "Heart": {
             "Value": random.randint(*HUMAN_RANGES["Heart"]),
@@ -80,6 +86,7 @@ def random_vital_signs():
 
 
 def file_checksum(path: str) -> str:
+    """Calculate SHA256 checksum of file."""
     hasher = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):

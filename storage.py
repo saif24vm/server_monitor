@@ -4,6 +4,7 @@ from utils import manipulate_sensor_json
 
 
 def download_file(client, notif_path, temp_local_file_path):
+    """Download JSON file from WebDAV and extract resident status."""
     client.download_sync(remote_path = notif_path, local_path = temp_local_file_path)
     f = open(temp_local_file_path,encoding='utf8')
     json_content_temp = json.load(f)

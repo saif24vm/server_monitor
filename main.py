@@ -8,7 +8,7 @@ logger = setup_logging()
 
 
 def main() -> None:
-
+    """Main entry point for server monitor application."""
     try:
         # Initialize paths
         base_dir, upload_path, download_path = get_paths()
