@@ -1,36 +1,34 @@
-from dotenv import load_dotenv
 from webdav3.client import Client
 import urllib3
-import json
 import os
-
-from storage import download_file, upload_file
-from utils import list_directory
- 
+import time
+from config import Config
+from storage import upload_file, download_file
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-load_dotenv(override=True)
-USERNAME = os.getenv("USERNAME")
-PASSWORD = os.getenv("PASSWORD")
-HOSTNAME = os.getenv("HOSTNAME")
-options = {
-  'webdav_hostname': HOSTNAME,
-  'webdav_login':    USERNAME,
-  'webdav_password': PASSWORD,
-}
-print(options)
+# ---- Load and validate configuration ----
+Config.validate()
+options = Config.get_webdav_options()
+
 client = Client(options)
 client.verify = False
- 
-currentDirectory = os.getcwd()
-cur_dir_mani = currentDirectory.replace("\\", "/")
-print(cur_dir_mani)
-temp_download_file_path = cur_dir_mani + "/download.json"
-sensor_path = "json_notifications/" + "BL0004" + ".json"
-#list_directory(client,"json_notifications/")
+
+# ---- Paths ----
+base_dir = os.getcwd().replace("\\", "/")
+
+temp_upload_file_path = f"{base_dir}/upload.json"
+temp_download_file_path = f"{base_dir}/download.json"
+
+remote_path = "json_notifications/CG0128.json"
 
 
+# ---- Step 1: Upload ----
+upload_file(client, temp_upload_file_path, remote_path)
+print("Upload completed")
 
-temp_upload_file_path = cur_dir_mani + "/upload.json"
-download_file(client,sensor_path, temp_download_file_path )
-#upload_file(client, temp_upload_file_path, sensor_path)
+# ---- Step 2: Wait 5 seconds ----
+time.sleep(5)
+
+# ---- Step 3: Download ----
+download_file(client, remote_path, temp_download_file_path)
+print("Download completed")
