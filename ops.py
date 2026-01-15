@@ -1,38 +1,63 @@
 # Setup logging
+import os
 import time
 from init import setup_logging
 from storage import download_file, upload_file
+from utils import file_checksum
 
 
 logger = setup_logging()
-def sync_files(upload_path: str, download_path: str, remote_path: str) -> None:
+def sync_files_continuous(
+    upload_path: str,
+    download_path: str,
+    remote_path: str,
+    interval_sec: int = 60
+) -> None:
     """
-    Synchronize files with WebDAV server.
-    
-    Args:
-        upload_path: Local path to file to upload
-        download_path: Local path to save downloaded file
-        remote_path: Remote path on WebDAV server
+    Continuously synchronize files with WebDAV every `interval_sec` seconds.
+    Emits a warning if uploaded and downloaded files differ.
+    """
+    logger.info("Starting continuous file synchronization (interval=%ss)", interval_sec)
+
+    while True:
+        try:
+            sync_files_once(upload_path, download_path, remote_path)
+
+            if not os.path.exists(upload_path) or not os.path.exists(download_path):
+                logger.warning("One or both files missing after sync")
+            else:
+                upload_hash = file_checksum(upload_path)
+                download_hash = file_checksum(download_path)
+
+                if upload_hash != download_hash:
+                    logger.warning(
+                        "File mismatch detected: uploaded and downloaded files differ"
+                    )
+                else:
+                    logger.info("File integrity verified: files match")
+
+        except Exception:
+            logger.exception("Synchronization cycle failed")
+
+        logger.info("Sleeping for %s seconds", interval_sec)
+        time.sleep(interval_sec)
+
+        
+def sync_files_once(upload_path: str, download_path: str, remote_path: str) -> None:
+    """
+    Perform a single upload → wait → download cycle.
     """
     from init import init_webdav_client
-    
+
     client = init_webdav_client()
-    
-    try:
-        # Upload file
-        logger.info(f"Uploading {upload_path} to {remote_path}")
-        upload_file(client, upload_path, remote_path)
-        logger.info("Upload completed successfully")
-        
-        # Wait for server to process
-        logger.info("Waiting 5 seconds for server to process...")
-        time.sleep(5)
-        
-        # Download file
-        logger.info(f"Downloading {remote_path} to {download_path}")
-        download_file(client, remote_path, download_path)
-        logger.info("Download completed successfully")
-        
-    except Exception as e:
-        logger.error(f"Error during file synchronization: {e}", exc_info=True)
-        raise
+
+    logger.info("Uploading %s to %s", upload_path, remote_path)
+    upload_file(client, upload_path, remote_path)
+
+    logger.info("Waiting 5 seconds for server processing")
+    time.sleep(5)
+
+    logger.info("Downloading %s to %s", remote_path, download_path)
+    download_file(client, remote_path, download_path)
+
+    logger.info("Single synchronization completed")

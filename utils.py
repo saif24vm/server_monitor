@@ -2,7 +2,7 @@ import json
 import random
 from datetime import datetime, timezone
 from enums import HUMAN_RANGES, STATE_LIST
-
+import hashlib
 
 def random_state():
     return random.choice(tuple(STATE_LIST))
@@ -59,3 +59,11 @@ def random_vital_signs():
             "Limit": 0
         }
     }
+
+
+def file_checksum(path: str) -> str:
+    hasher = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
