@@ -23,7 +23,7 @@ def get_resident_status_from_file(file_path: str) -> str:
         logger.error(f"Error reading resident status from file: {e}")
         return "ERROR"
 
-def sync_files_continuous(
+def start_server_check(
     upload_path: str,
     download_path: str,
     remote_path: str,
@@ -69,7 +69,7 @@ def sync_files_continuous(
                     if api_status != latest_state:
                         mismatch_count += 1
                         logger.warning(
-                            f"Resident status mismatch detected ({mismatch_count}/6): API status={api_status}, File status={file_status}"
+                            f"Resident status mismatch detected ({mismatch_count}/6): API status={api_status},"
                         )
                         # Send email alert when mismatch reaches 6 times
                         if mismatch_count == 6:

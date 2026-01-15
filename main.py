@@ -1,5 +1,5 @@
 from init import initialize_portal, setup_logging, get_paths, init_webdav_client
-from ops import sync_files_continuous
+from ops import start_server_check
 
 # Setup logging
 logger = setup_logging()
@@ -28,7 +28,7 @@ def main() -> None:
         logger.info("WebDAV client initialized")
         
         # Start Checking Server and Syncing Files
-        sync_files_continuous(
+        start_server_check(
             upload_path="upload.json",
             download_path="download.json",
             remote_path="json_notifications/CG0128.json",
