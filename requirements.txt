@@ -4,3 +4,4 @@ webdriver-manager
 pyserial
 python-dotenv
 webdavclient3
+urllib3
