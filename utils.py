@@ -5,7 +5,9 @@ from enums import HUMAN_RANGES, STATE_LIST
 import hashlib
 
 def random_state():
-    return random.choice(tuple(STATE_LIST))
+    global latest_state
+    latest_state = random.choice(tuple(STATE_LIST))
+    return latest_state
 
 
 def now_utc_iso():
@@ -25,7 +27,7 @@ def manipulate_sensor_json(file_path: str) -> None:
     Mutates upload.json:
     - Random Resident.Status
     - Updated Resident.Timestamp
-    - Random human-factor VitalSigns values
+    - Random human-factor VitalSigns values (only if status is S_PRESENT_BED)
     """
 
     with open(file_path, "r", encoding="utf-8") as f:
@@ -35,8 +37,24 @@ def manipulate_sensor_json(file_path: str) -> None:
     data["Resident"]["Status"] = random_state()
     data["Resident"]["Timestamp"] = now_utc_iso()
 
-    # ---- Vital signs ----
-    data["VitalSigns"] = random_vital_signs()
+    # ---- Vital signs (only update if resident is in bed, else set to 0) ----
+    if latest_state == "S_PRESENT_BED":
+        data["VitalSigns"] = random_vital_signs()
+    else:
+        data["VitalSigns"] = {
+            "Heart": {
+                "Value": 0,
+                "Limit": 0
+            },
+            "Breath": {
+                "Value": 0,
+                "Limit": 0
+            },
+            "Temperature": {
+                "Value": 0,
+                "Limit": 0
+            }
+        }
 
     # ---- Root timestamp ----
     data["Timestamp"] = now_utc_iso()

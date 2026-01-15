@@ -1,6 +1,6 @@
 {
   "ID": "CG0128",
-  "Timestamp": "2026-01-15T11:48:03.716Z",
+  "Timestamp": "2026-01-15T12:04:26.598Z",
   "Version": 1.28,
   "Confirmations": {
     "Commands": {
@@ -29,20 +29,20 @@
     "Trained": 100
   },
   "Resident": {
-    "Status": "S_ABSENT",
-    "Timestamp": "2026-01-15T11:48:03.716Z"
+    "Status": "S_PRESENT_BED",
+    "Timestamp": "2026-01-15T12:04:26.598Z"
   },
   "VitalSigns": {
     "Heart": {
-      "Value": 109,
+      "Value": 85,
       "Limit": 0
     },
     "Breath": {
-      "Value": 14,
+      "Value": 10,
       "Limit": 0
     },
     "Temperature": {
-      "Value": 36.5,
+      "Value": 38.5,
       "Limit": 0
     }
   }

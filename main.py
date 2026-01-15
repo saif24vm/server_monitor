@@ -23,7 +23,7 @@ def main() -> None:
             upload_path="upload.json",
             download_path="download.json",
             remote_path="json_notifications/CG0128.json",
-            interval_sec=60
+            interval_sec=10
         )
 
         
