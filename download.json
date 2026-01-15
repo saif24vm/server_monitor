@@ -1,49 +1,49 @@
 {
-    "ID": "CG0128",
-    "Timestamp": "2026-01-15T09:48:35.000Z",
-    "Version": 1.28,
-    "Confirmations": {
-      "Commands": {
-        "Status": "OK",
-        "Timestamp": "2025-11-06T14:05:12.746Z"
-      },
-      "SettingsApp": {
-        "Status": "OK",
-        "Timestamp": "2026-01-14T09:03:53.548Z"
-      },
-      "RoomConfiguration": {
-        "Status": "OK",
-        "Timestamp": "2026-01-15T09:39:10.377Z"
-      },
-      "SensorInfo": {
-        "Status": "OK",
-        "Timestamp": "2025-10-30T12:50:01.300Z"
-      }
-     },
-    "Sensor": {
-      "Status": "S_OK",
-      "FirmwareVersion": "A_1.0",
-      "IP": "192.168.188.155",
-      "MAC": "44:ee:14:af:45:49",
-      "RSSI": 3,
-      "Trained": 100
-     },
-    "Resident": {
-      "Status": "S_PRESENT_BED",
-      "Timestamp": "2026-01-15T09:40:35.000Z"
-     },
-    "VitalSigns": {
-      "Heart": {
-        "Value": 0,
-        "Limit": 0
-      },
-      "Breath": {
-        "Value": 0,
-        "Limit": 0
-      },
-      "Temperature": {
-        "Value": 0,
-        "Limit": 0
-      }
-     }
+  "ID": "CG0128",
+  "Timestamp": "2026-01-15T11:13:37.715Z",
+  "Version": 1.28,
+  "Confirmations": {
+    "Commands": {
+      "Status": "OK",
+      "Timestamp": "2025-11-06T14:05:12.746Z"
+    },
+    "SettingsApp": {
+      "Status": "OK",
+      "Timestamp": "2026-01-14T09:03:53.548Z"
+    },
+    "RoomConfiguration": {
+      "Status": "OK",
+      "Timestamp": "2026-01-15T09:39:10.377Z"
+    },
+    "SensorInfo": {
+      "Status": "OK",
+      "Timestamp": "2025-10-30T12:50:01.300Z"
+    }
+  },
+  "Sensor": {
+    "Status": "S_OK",
+    "FirmwareVersion": "A_1.0",
+    "IP": "192.168.188.155",
+    "MAC": "44:ee:14:af:45:49",
+    "RSSI": 3,
+    "Trained": 100
+  },
+  "Resident": {
+    "Status": "S_ABSENT",
+    "Timestamp": "2026-01-15T11:13:37.715Z"
+  },
+  "VitalSigns": {
+    "Heart": {
+      "Value": 81,
+      "Limit": 0
+    },
+    "Breath": {
+      "Value": 17,
+      "Limit": 0
+    },
+    "Temperature": {
+      "Value": 36.9,
+      "Limit": 0
+    }
+  }
 }

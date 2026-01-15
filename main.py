@@ -1,34 +1,32 @@
-from webdav3.client import Client
-import urllib3
-import os
-import time
-from config import Config
-from storage import upload_file, download_file
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from init import setup_logging, get_paths
+from ops import sync_files
 
-# ---- Load and validate configuration ----
-Config.validate()
-options = Config.get_webdav_options()
-
-client = Client(options)
-client.verify = False
-
-# ---- Paths ----
-base_dir = os.getcwd().replace("\\", "/")
-
-temp_upload_file_path = f"{base_dir}/upload.json"
-temp_download_file_path = f"{base_dir}/download.json"
-
-remote_path = "json_notifications/CG0128.json"
+# Setup logging
+logger = setup_logging()
 
 
-# ---- Step 1: Upload ----
-upload_file(client, temp_upload_file_path, remote_path)
-print("Upload completed")
 
-# ---- Step 2: Wait 5 seconds ----
-time.sleep(5)
 
-# ---- Step 3: Download ----
-download_file(client, remote_path, temp_download_file_path)
-print("Download completed")
+def main() -> None:
+
+    try:
+        # Initialize paths
+        base_dir, upload_path, download_path = get_paths()
+      
+        # Configuration
+        remote_path = "json_notifications/CG0128.json"
+        logger.info(f"Base directory: {base_dir}")
+        logger.info(f"Remote path: {remote_path}")
+        
+        # Execute sync
+        sync_files(upload_path, download_path, remote_path)
+        
+        logger.info("Application completed successfully")
+        
+    except Exception as e:
+        logger.critical(f"Application failed: {e}", exc_info=True)
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()
