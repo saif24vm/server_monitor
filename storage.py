@@ -14,6 +14,7 @@ def download_file(client, notif_path, temp_local_file_path):
     timestamp_notif = json_content_temp["Timestamp"]
     return status, timestamp_status, timestamp_notif
 
+
 def upload_file(client, local_path, remote_path):
     """
     Upload a local file to WebDAV.

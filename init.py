@@ -9,7 +9,7 @@ import os
 import json
 import urllib3
 from webdav3.client import Client
-
+from colorlog import ColoredFormatter
 from config import Config
 from portal import validate_credentials, browser_login, create_authenticated_session, call_authenticated_api
 
@@ -18,17 +18,30 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def setup_logging() -> logging.Logger:
-    """
-    Configure and return the logger for the application.
-    
-    Returns:
-        logging.Logger: Configured logger instance
-    """
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    handler = logging.StreamHandler()
+
+    formatter = ColoredFormatter(
+        "%(log_color)s%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        log_colors={
+            "DEBUG":    "cyan",
+            "INFO":     "green",
+            "WARNING":  "yellow",
+            "ERROR":    "red",
+            "CRITICAL": "bold_red",
+        }
     )
-    return logging.getLogger(__name__)
+
+    handler.setFormatter(formatter)
+
+    logger.handlers.clear()
+    logger.addHandler(handler)
+
+    return logger
+
 
 
 def init_webdav_client() -> Client:
@@ -41,6 +54,7 @@ def init_webdav_client() -> Client:
     Raises:
         ValueError: If configuration validation fails
     """
+    global client
     logger = logging.getLogger(__name__)
     
     Config.validate()
@@ -52,6 +66,13 @@ def init_webdav_client() -> Client:
     logger.info("WebDAV client initialized successfully")
     return client
 
+def get_saved_client():
+
+    """  Get the saved WebDAV client.
+    
+    """
+    return client
+
 
 def initialize_portal() -> dict:
     """Initialize portal: validate credentials, login, and fetch sensor data.
@@ -59,6 +80,7 @@ def initialize_portal() -> dict:
     Returns:
         dict: Sensor data from the authenticated API call
     """
+    global saved_session
     logger = logging.getLogger(__name__)
     
     logger.info("Step 1: Validating backend credentials...")
@@ -68,8 +90,21 @@ def initialize_portal() -> dict:
     cookies = browser_login()
     
     logger.info("Step 3: Creating authenticated session...")
-    session = create_authenticated_session(cookies)
+    saved_session = create_authenticated_session(cookies)
     
+
+def get_saved_session():
+    """Get the saved authenticated session.
+    
+    Returns:
+        requests.Session: The authenticated session, or None if not initialized
+    """
+    return saved_session
+
+
+
+
+
 def get_paths() -> tuple[str, str, str]:
     """
     Get base directory and file paths.

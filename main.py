@@ -1,4 +1,4 @@
-from init import initialize_portal, setup_logging, get_paths
+from init import initialize_portal, setup_logging, get_paths, init_webdav_client
 from ops import sync_files_continuous
 
 # Setup logging
@@ -21,6 +21,11 @@ def main() -> None:
         logger.info("Initializing portal authentication...")
         initialize_portal()
         logger.info("Portal data received successfully")
+        
+        # Initialize WebDAV client
+        logger.info("Initializing WebDAV client...")
+        init_webdav_client()
+        logger.info("WebDAV client initialized")
         
         # Start Checking Server and Syncing Files
         sync_files_continuous(

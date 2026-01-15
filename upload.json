@@ -1,6 +1,6 @@
 {
   "ID": "CG0128",
-  "Timestamp": "2026-01-15T14:58:58.684Z",
+  "Timestamp": "2026-01-15T15:54:13.029Z",
   "Version": 1.28,
   "Confirmations": {
     "Commands": {
@@ -29,8 +29,8 @@
     "Trained": 100
   },
   "Resident": {
-    "Status": "S_PRESENT_BATHROOM",
-    "Timestamp": "2026-01-15T14:58:58.684Z"
+    "Status": "S_PRESENT_ROOM",
+    "Timestamp": "2026-01-15T15:54:13.029Z"
   },
   "VitalSigns": {
     "Heart": {

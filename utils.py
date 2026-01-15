@@ -42,7 +42,7 @@ def manipulate_sensor_json(file_path: str) -> None:
     - Updated Resident.Timestamp
     - Random human-factor VitalSigns values (only if status is S_PRESENT_BED)
     """
-
+    global latest_state
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -74,6 +74,14 @@ def manipulate_sensor_json(file_path: str) -> None:
 
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+def get_latest_state():
+    """Get the latest resident state.
+    
+    Returns:
+        str: The latest resident state, or None if not set
+    """
+    return latest_state
 
 def random_vital_signs():
     """Generate random vital signs within human ranges."""
@@ -140,3 +148,37 @@ def file_checksum(path: str) -> str:
         for chunk in iter(lambda: f.read(8192), b""):
             hasher.update(chunk)
     return hasher.hexdigest()
+
+
+
+def extract_resident_status(api_response: dict, sensor_id: str) -> str:
+
+    # ---- SENSOR EXISTS ----
+    if sensor_id not in api_response:
+        raise KeyError(f"Sensor '{sensor_id}' not found in response")
+
+    sensor_entry = api_response[sensor_id]
+
+   
+
+    # ---- NOTIFICATION EXISTS ----
+    notification_raw = sensor_entry.get("notification")
+    if not notification_raw:
+        raise ValueError(f"Sensor '{sensor_id}' has no notification data")
+
+    # ---- PARSE INNER JSON ----
+    try:
+        notification = json.loads(notification_raw)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"Invalid notification JSON for sensor '{sensor_id}'"
+        ) from e
+
+    # ---- RESIDENT STATUS ----
+    resident = notification.get("Resident")
+    if not resident or "Status" not in resident:
+        raise ValueError(
+            f"Resident status missing for sensor '{sensor_id}'"
+        )
+
+    return resident["Status"]
