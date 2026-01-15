@@ -1,4 +1,4 @@
-from init import setup_logging, get_paths
+from init import initialize_portal, setup_logging, get_paths
 from ops import sync_files_continuous
 
 # Setup logging
@@ -17,6 +17,10 @@ def main() -> None:
         remote_path = "json_notifications/CG0128.json"
         logger.info(f"Base directory: {base_dir}")
         logger.info(f"Remote path: {remote_path}")
+
+        logger.info("Initializing portal authentication...")
+        initialize_portal()
+        logger.info("Portal data received successfully")
         
         # Start Checking Server and Syncing Files
         sync_files_continuous(

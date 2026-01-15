@@ -1,7 +1,8 @@
 # Setup logging
 import os
 import time
-from init import setup_logging
+import json
+from init import setup_logging, initialize_portal
 from storage import download_file, upload_file
 from utils import file_checksum, send_mismatch_email
 

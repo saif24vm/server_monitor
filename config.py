@@ -6,6 +6,13 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv(override=True)
 
+# VMedD Portal Configuration
+BASE_URL = "https://vmedd-portal.de"
+LOGIN_API_URL = f"{BASE_URL}/ems/vmedd-monitor/fo/portal/loginWidget.json"
+SENSOR_INFO_URL = f"{BASE_URL}/ems/vmedd-monitor/fo/portal/vmeddNotifications.json"
+START_URL = f"{BASE_URL}/ems/vmedd-monitor/fo/portal/start"
+LOGGED_IN_URL = "/ems/vmedd-monitor/fo/portal/home"
+
 
 class Config:
     """Configuration class for WebDAV credentials."""
