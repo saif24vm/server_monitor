@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from config import BASE_URL, LOGGED_IN_URL, LOGIN_API_URL, SENSOR_INFO_URL, START_URL
+from config.config import BASE_URL, LOGGED_IN_URL, LOGIN_API_URL, SENSOR_INFO_URL, START_URL
 
 load_dotenv(override=True)
 USERNAME = os.getenv("PORTAL_USERNAME")

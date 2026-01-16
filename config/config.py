@@ -47,4 +47,4 @@ class Config:
         if missing:
             raise EnvironmentError(f"Missing environment variables: {', '.join(missing)}")
         
-        print(f"✓ Configuration loaded: {cls.WEBDAV_HOSTNAME}")
+        print(f"[OK] Configuration loaded: {cls.WEBDAV_HOSTNAME}")

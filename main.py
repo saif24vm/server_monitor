@@ -1,7 +1,8 @@
 import signal
-import sys
-from init import initialize_portal, setup_logging, get_paths, init_webdav_client
-from ops import start_server_check
+import json
+from pathlib import Path
+from core.initialization import initialize_portal, setup_logging, get_paths, init_webdav_client
+from core.monitor import MonitorService
 
 # Setup logging
 logger = setup_logging()
@@ -17,8 +18,38 @@ def signal_handler(signum, frame) -> None:
     shutdown_event = True
 
 
+def load_residents_config(config_path: str = "config/residents.json") -> list:
+    """
+    Load residents configuration from JSON file.
+    
+    Args:
+        config_path: Path to residents configuration file
+    
+    Returns:
+        list: List of resident configs
+    """
+    try:
+        if not Path(config_path).exists():
+            logger.warning(f"Config file {config_path} not found, using defaults")
+            # Default config for backward compatibility
+            return [{"id": "CG0128", "interval": 10}]
+        
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        
+        residents = config.get("residents", [])
+        logger.info(f"Loaded {len(residents)} resident(s) from config")
+        return residents
+    
+    except Exception as e:
+        logger.error(f"Failed to load residents config: {e}")
+        # Fallback to default
+        return [{"id": "CG0128", "interval": 10}]
+
+
 def main() -> None:
-    """Main entry point for server monitor application."""
+
+
     global shutdown_event
     
     # Register signal handlers for graceful shutdown
@@ -27,13 +58,13 @@ def main() -> None:
     
     try:
         # Initialize paths
-        base_dir, upload_path, download_path = get_paths()
-      
-        # Configuration
-        remote_path = "json_notifications/CG0128.json"
+        base_dir= get_paths()
         logger.info(f"Base directory: {base_dir}")
-        logger.info(f"Remote path: {remote_path}")
 
+        # Load residents configuration
+        logger.info("Loading residents configuration...")
+        residents_config = load_residents_config()
+        
         logger.info("Initializing portal authentication...")
         initialize_portal()
         logger.info("Portal data received successfully")
@@ -43,15 +74,14 @@ def main() -> None:
         init_webdav_client()
         logger.info("WebDAV client initialized")
         
-        # Start Checking Server and Syncing Files
-        start_server_check(
-            upload_path="upload.json",
-            download_path="download.json",
-            remote_path="json_notifications/CG0128.json",
-            interval_sec=10,
+        # Create and start monitor service
+        logger.info(f"Starting monitor service for {len(residents_config)} resident(s)")
+        monitor_service = MonitorService(
+            residents_config=residents_config,
             shutdown_flag=lambda: shutdown_event
         )
-
+        
+        monitor_service.start()
         
         logger.info("Application completed successfully")
         

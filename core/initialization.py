@@ -6,15 +6,18 @@ Handles setup of logging, WebDAV client, paths, and portal authentication.
 
 import logging
 import os
-import json
 import urllib3
 from webdav3.client import Client
 from colorlog import ColoredFormatter
-from config import Config
-from portal import validate_credentials, browser_login, create_authenticated_session, call_authenticated_api
+from config.config import Config
+from core.portal import validate_credentials, browser_login, create_authenticated_session
 
 # Suppress SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Global instances
+_client = None
+_saved_session = None
 
 
 def setup_logging() -> logging.Logger:
@@ -43,7 +46,6 @@ def setup_logging() -> logging.Logger:
     return logger
 
 
-
 def init_webdav_client() -> Client:
     """
     Initialize and return a configured WebDAV client.
@@ -54,33 +56,34 @@ def init_webdav_client() -> Client:
     Raises:
         ValueError: If configuration validation fails
     """
-    global client
+    global _client
     logger = logging.getLogger(__name__)
     
     Config.validate()
     options = Config.get_webdav_options()
     
-    client = Client(options)
-    client.verify = False
+    _client = Client(options)
+    _client.verify = False
     
     logger.info("WebDAV client initialized successfully")
-    return client
-
-def get_saved_client():
-
-    """  Get the saved WebDAV client.
-    
-    """
-    return client
+    return _client
 
 
-def initialize_portal() -> dict:
-    """Initialize portal: validate credentials, login, and fetch sensor data.
+def get_saved_client() -> Client:
+    """Get the saved WebDAV client.
     
     Returns:
-        dict: Sensor data from the authenticated API call
+        Client: The configured WebDAV client
     """
-    global saved_session
+    global _client
+    if _client is None:
+        raise RuntimeError("WebDAV client not initialized. Call init_webdav_client() first.")
+    return _client
+
+
+def initialize_portal() -> None:
+    """Initialize portal: validate credentials, login, and fetch sensor data."""
+    global _saved_session
     logger = logging.getLogger(__name__)
     
     logger.info("Step 1: Validating backend credentials...")
@@ -90,8 +93,8 @@ def initialize_portal() -> dict:
     cookies = browser_login()
     
     logger.info("Step 3: Creating authenticated session...")
-    saved_session = create_authenticated_session(cookies)
-    
+    _saved_session = create_authenticated_session(cookies)
+
 
 def get_saved_session():
     """Get the saved authenticated session.
@@ -99,10 +102,8 @@ def get_saved_session():
     Returns:
         requests.Session: The authenticated session, or None if not initialized
     """
-    return saved_session
-
-
-
+    global _saved_session
+    return _saved_session
 
 
 def get_paths() -> tuple[str, str, str]:
@@ -113,6 +114,6 @@ def get_paths() -> tuple[str, str, str]:
         tuple: (base_dir, upload_path, download_path)
     """
     base_dir = os.getcwd().replace("\\", "/")
-    upload_path = f"{base_dir}/upload.json"
-    download_path = f"{base_dir}/download.json"
+    upload_path = f"{base_dir}/data/upload.json"
+    download_path = f"{base_dir}/data/download.json"
     return base_dir, upload_path, download_path

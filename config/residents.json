@@ -1,0 +1,10 @@
+{
+  "residents": [
+    {
+      "id": "CG0128",
+      "interval": 10,
+      "upload_path": "upload.json",
+      "download_path": "download.json"
+    }
+  ]
+}

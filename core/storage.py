@@ -1,14 +1,15 @@
-import json
+"""WebDAV storage operations for Server Monitor."""
 
-from utils import manipulate_sensor_json
+import json
+from utils.json_utils import manipulate_sensor_json
 
 
 def download_file(client, notif_path, temp_local_file_path):
     """Download JSON file from WebDAV and extract resident status."""
-    client.download_sync(remote_path = notif_path, local_path = temp_local_file_path)
-    f = open(temp_local_file_path,encoding='utf8')
-    json_content_temp = json.load(f)
-    f.close()
+    client.download_sync(remote_path=notif_path, local_path=temp_local_file_path)
+    with open(temp_local_file_path, encoding='utf8') as f:
+        json_content_temp = json.load(f)
+    
     status = json_content_temp["Resident"]["Status"]
     timestamp_status = json_content_temp["Resident"]["Timestamp"]
     timestamp_notif = json_content_temp["Timestamp"]
