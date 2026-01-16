@@ -27,18 +27,22 @@ def start_server_check(
     upload_path: str,
     download_path: str,
     remote_path: str,
-    interval_sec: int = 60
+    interval_sec: int = 60,
+    shutdown_flag=None
 ) -> None:
     """
     Continuously synchronize files with WebDAV every `interval_sec` seconds.
     Compares resident status from authenticated API with downloaded file.
     Sends email alert if statuses mismatch 6 times consecutively.
+    
+    Args:
+        shutdown_flag: Callable that returns True when shutdown is requested
     """
     global mismatch_count
     logger.info("Starting continuous file synchronization (interval=%ss)", interval_sec)
     client = get_saved_client()
 
-    while True:
+    while not (shutdown_flag and shutdown_flag()):
         try:
             
             logger.info("Uploading %s to %s", upload_path, remote_path)
@@ -86,7 +90,7 @@ def start_server_check(
         logger.info("Sleeping for %s seconds", interval_sec)
         time.sleep(interval_sec)
 
-        
+    logger.info("Graceful shutdown complete")
 def sync_files_once(upload_path: str, download_path: str, remote_path: str) -> None:
     """
     Perform a single upload → wait → download cycle.

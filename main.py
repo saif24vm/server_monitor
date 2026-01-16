@@ -1,14 +1,30 @@
+import signal
+import sys
 from init import initialize_portal, setup_logging, get_paths, init_webdav_client
 from ops import start_server_check
 
 # Setup logging
 logger = setup_logging()
 
+# Global flag for graceful shutdown
+shutdown_event = False
 
+
+def signal_handler(signum, frame) -> None:
+    """Handle shutdown signals gracefully."""
+    global shutdown_event
+    logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+    shutdown_event = True
 
 
 def main() -> None:
     """Main entry point for server monitor application."""
+    global shutdown_event
+    
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
+    signal.signal(signal.SIGTERM, signal_handler)  # Termination signal
+    
     try:
         # Initialize paths
         base_dir, upload_path, download_path = get_paths()
@@ -32,7 +48,8 @@ def main() -> None:
             upload_path="upload.json",
             download_path="download.json",
             remote_path="json_notifications/CG0128.json",
-            interval_sec=10
+            interval_sec=10,
+            shutdown_flag=lambda: shutdown_event
         )
 
         
