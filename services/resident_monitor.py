@@ -3,14 +3,16 @@
 import os
 import time
 import logging
-from core.storage import download_file, upload_file
+from core.storage import  upload_file
 from utils.json_utils import extract_resident_status, get_resident_status_from_file
 from services.state_manager import StateManager
 from core.portal import call_authenticated_api
-
+from services.notification_service import send_mismatch_email
 
 logger = logging.getLogger(__name__)
 
+EMAIL_PAUSE_HOURS = int(os.getenv("EMAIL_PAUSE", "1"))
+EMAIL_PAUSE_SEC = EMAIL_PAUSE_HOURS * 3600
 
 class ResidentMonitor:
     """Monitors a single resident's status."""
@@ -26,12 +28,19 @@ class ResidentMonitor:
         self.resident_id = resident_id
         self.interval_sec = interval_sec
         self.mismatch_count = 0
+        self.last_email_ts: float | None = None
         self.state_manager = StateManager()
         
         # Paths
         self.upload_path = f"data/upload.json"
         self.download_path = f"data/download.json"
         self.remote_path = f"json_notifications/{resident_id}.json"
+
+    def _can_send_email(self) -> bool:
+        """Check whether email pause window has elapsed."""
+        if self.last_email_ts is None:
+            return True
+        return (time.time() - self.last_email_ts) >= EMAIL_PAUSE_SEC
     
     def sync_once(self, client=None, session=None) -> bool:
         """
@@ -81,22 +90,29 @@ class ResidentMonitor:
                 logger.info(f"[{self.resident_id}] Initializing state with API status: {api_status}")
                 self.state_manager.save_state(self.resident_id, api_status)
                 return True
-            
+
+            latest_state="test"
             if api_status != latest_state:
                 self.mismatch_count += 1
                 logger.warning(
                     f"[{self.resident_id}] Status mismatch ({self.mismatch_count}/6): "
                     f"API={api_status}, State={latest_state}"
                 )
-                
-                # Send alert after 6 consecutive mismatches
-                if self.mismatch_count == 6:
-                    logger.critical(
-                        f"[{self.resident_id}] Mismatch reached 6 times! Sending alert..."
-                    )
-                    from services.notification_service import send_mismatch_email
-                    send_mismatch_email(self.resident_id, self.mismatch_count)
-                    self.mismatch_count = 0
+
+                if self.mismatch_count >= 10:
+                    if self._can_send_email():
+                        logger.critical(
+                            f"[{self.resident_id}] Mismatch reached {self.mismatch_count} times. "
+                            f"Sending alert (pause={EMAIL_PAUSE_HOURS}h)."
+                        )
+                        send_mismatch_email(self.resident_id, self.mismatch_count)
+                        self.last_email_ts = time.time()
+                    else:
+                        logger.warning(
+                            f"[{self.resident_id}] Email suppressed due to EMAIL_PAUSE "
+                            f"({EMAIL_PAUSE_HOURS}h)."
+                        )
+
             else:
                 logger.info(f"[{self.resident_id}] Status verified - match confirmed")
                 self.mismatch_count = 0
@@ -108,3 +124,5 @@ class ResidentMonitor:
             logger.exception(f"[{self.resident_id}] Sync failed")
             self.mismatch_count += 1
             return False
+        
+
