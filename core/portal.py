@@ -44,11 +44,13 @@ def validate_credentials() -> None:
 # -------------------------------------------------
 def browser_login():
     options = Options()
-    options.binary_location = "/usr/bin/chromium"
     options.add_argument("--headless=new")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
+    # Docker-only flags
+    if os.getenv("RUNNING_IN_DOCKER") == "1":
+        options.binary_location = "/usr/bin/chromium"
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
 
     # IMPORTANT: do NOT pass Service()
     driver = webdriver.Chrome(options=options)
