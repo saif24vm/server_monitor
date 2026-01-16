@@ -99,7 +99,7 @@ class ResidentMonitor:
                 self.state_manager.save_state(self.resident_id, api_status)
                 return True
             
-            """ss
+            """
             # For testing purpose only
             if self.a < 12:
                 latest_state = "test"
