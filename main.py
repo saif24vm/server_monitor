@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 from core.initialization import initialize_portal, setup_logging, get_paths, init_webdav_client
+from config.config import get_residents
 from core.monitor import MonitorService
 
 # Setup logging
@@ -20,24 +21,12 @@ def signal_handler(signum, frame) -> None:
 
 
 def load_residents_config() -> list:
-    """
-    Load residents configuration from environment variables.
-
-    The application no longer requires `config/residents.json`.
-    Provide the resident id via RESIDENT_ID and interval via RESIDENT_INTERVAL.
-    If not provided, falls back to a single default resident.
-
-    Returns:
-        list: List of resident configs
-    """
     try:
-        resident_id = os.getenv("RESIDENT_ID", "CG0128")
-        interval = int(os.getenv("RESIDENT_INTERVAL", "10"))
-        residents = [{"id": resident_id, "interval": interval}]
-        logger.info(f"Configured {len(residents)} resident(s) from environment")
+        residents = get_residents()
+        logger.info(f"Configured {len(residents)} resident(s) from config")
         return residents
     except Exception as e:
-        logger.error(f"Failed to load residents config from env: {e}")
+        logger.error(f"Failed to load residents config from config module: {e}")
         return [{"id": "CG0128", "interval": 10}]
 
 

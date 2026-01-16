@@ -47,3 +47,19 @@ class Config:
             raise EnvironmentError(f"Missing environment variables: {', '.join(missing)}")
         
         print(f"[OK] Configuration loaded: {cls.WEBDAV_HOSTNAME}")
+
+
+# --------------------- Residents configuration ---------------------
+# For small setups we load a single resident from environment variables.
+# Use RESIDENT_ID and RESIDENT_INTERVAL in your .env or environment.
+def get_residents() -> list:
+    """Return a list with a single resident config read from env.
+
+    Falls back to defaults: id='CG0128', interval=10.
+    """
+    resident_id = os.getenv("RESIDENT_ID", "CG0128")
+    try:
+        interval = int(os.getenv("RESIDENT_INTERVAL", "10"))
+    except Exception:
+        interval = 10
+    return [{"id": resident_id, "interval": interval}]
