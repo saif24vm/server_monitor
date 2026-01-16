@@ -25,17 +25,24 @@ def send_mismatch_email(resident_id: str, mismatch_count: int) -> bool:
     try:
         email_sender = os.getenv("EMAIL_SENDER")
         email_password = os.getenv("EMAIL_PASSWORD")
-        email_recipient = os.getenv("EMAIL_RECIPIENT")
+        # Support multiple recipients: EMAIL_RECIPIENTS can be a comma-separated list.
+        recipients_raw = os.getenv("EMAIL_RECIPIENTS") 
         smtp_server = os.getenv("SMTP_SERVER")
         smtp_port = int(os.getenv("SMTP_PORT", "465"))
 
-        if not all([email_sender, email_password, email_recipient, smtp_server]):
+        if not all([email_sender, email_password, recipients_raw, smtp_server]):
             logger.error("SMTP configuration incomplete")
             raise RuntimeError("SMTP configuration incomplete")
 
+        # Parse recipients into a list, trimming whitespace and ignoring empties
+        recipients = [r.strip() for r in recipients_raw.split(",") if r.strip()]
+        if not recipients:
+            logger.error("No valid email recipients configured")
+            raise RuntimeError("No valid email recipients configured")
+
         msg = MIMEMultipart()
         msg["From"] = email_sender
-        msg["To"] = email_recipient
+        msg["To"] = ", ".join(recipients)
         msg["Subject"] = f"Server Monitor Alert - Resident {resident_id}"
 
         body = f"""
@@ -43,7 +50,7 @@ def send_mismatch_email(resident_id: str, mismatch_count: int) -> bool:
           <body>
             <h2>Server Monitor Alert - Resident {resident_id}</h2>
             <p><strong>Resident:</strong> {resident_id}</p>
-            <p><strong>Issue:</strong> WebDAV server upload and downloaded files do not match.</p>
+            <p><strong>Issue:</strong> WebDAV server Upload status and Browser download status do not match. There might be problem in server</p>
             <p><strong>Consecutive Mismatches:</strong> {mismatch_count}</p>
             <p><strong>Timestamp:</strong> {now_utc_iso()}</p>
           </body>
@@ -54,7 +61,8 @@ def send_mismatch_email(resident_id: str, mismatch_count: int) -> bool:
 
         with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
             server.login(email_sender, email_password)
-            server.send_message(msg)
+            # send_message accepts an explicit list of recipients
+            server.send_message(msg, to_addrs=recipients)
 
         logger.info(f"Alert email sent for resident {resident_id}")
         return True

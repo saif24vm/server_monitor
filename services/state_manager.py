@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from utils.time_utils import now_utc_iso
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ class StateManager:
         try:
             _state_store[resident_id] = {
                 "status": status,
-                "timestamp": os.popen("date /T").read().strip()
+                "timestamp": now_utc_iso()
             }
             with open(self.state_file, 'w') as f:
                 json.dump(_state_store, f, indent=2)

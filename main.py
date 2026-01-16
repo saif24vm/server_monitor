@@ -1,5 +1,6 @@
 import signal
 import json
+import os
 from pathlib import Path
 from core.initialization import initialize_portal, setup_logging, get_paths, init_webdav_client
 from core.monitor import MonitorService
@@ -18,32 +19,25 @@ def signal_handler(signum, frame) -> None:
     shutdown_event = True
 
 
-def load_residents_config(config_path: str = "config/residents.json") -> list:
+def load_residents_config() -> list:
     """
-    Load residents configuration from JSON file.
-    
-    Args:
-        config_path: Path to residents configuration file
-    
+    Load residents configuration from environment variables.
+
+    The application no longer requires `config/residents.json`.
+    Provide the resident id via RESIDENT_ID and interval via RESIDENT_INTERVAL.
+    If not provided, falls back to a single default resident.
+
     Returns:
         list: List of resident configs
     """
     try:
-        if not Path(config_path).exists():
-            logger.warning(f"Config file {config_path} not found, using defaults")
-            # Default config for backward compatibility
-            return [{"id": "CG0128", "interval": 10}]
-        
-        with open(config_path, 'r') as f:
-            config = json.load(f)
-        
-        residents = config.get("residents", [])
-        logger.info(f"Loaded {len(residents)} resident(s) from config")
+        resident_id = os.getenv("RESIDENT_ID", "CG0128")
+        interval = int(os.getenv("RESIDENT_INTERVAL", "10"))
+        residents = [{"id": resident_id, "interval": interval}]
+        logger.info(f"Configured {len(residents)} resident(s) from environment")
         return residents
-    
     except Exception as e:
-        logger.error(f"Failed to load residents config: {e}")
-        # Fallback to default
+        logger.error(f"Failed to load residents config from env: {e}")
         return [{"id": "CG0128", "interval": 10}]
 
 
