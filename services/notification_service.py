@@ -23,6 +23,7 @@ def send_mismatch_email(resident_id: str, mismatch_count: int) -> bool:
         bool: True if email sent successfully, False otherwise
     """
     try:
+
         email_sender = os.getenv("EMAIL_SENDER")
         email_password = os.getenv("EMAIL_PASSWORD")
         # Support multiple recipients: EMAIL_RECIPIENTS can be a comma-separated list.
@@ -69,4 +70,65 @@ def send_mismatch_email(resident_id: str, mismatch_count: int) -> bool:
 
     except Exception:
         logger.exception("Failed to send mismatch email")
+        return False
+    
+
+
+def send_recovery_email(resident_id: str) -> bool:
+    """
+    Send email notification indicating server recovery for a resident.
+
+    Args:
+        resident_id: Resident identifier
+
+    Returns:
+        bool: True if email sent successfully, False otherwise
+    """
+    try:
+        email_sender = os.getenv("EMAIL_SENDER")
+        email_password = os.getenv("EMAIL_PASSWORD")
+        recipients_raw = os.getenv("EMAIL_RECIPIENTS")
+        smtp_server = os.getenv("SMTP_SERVER")
+        smtp_port = int(os.getenv("SMTP_PORT", "465"))
+
+        if not all([email_sender, email_password, recipients_raw, smtp_server]):
+            logger.error("SMTP configuration incomplete")
+            raise RuntimeError("SMTP configuration incomplete")
+
+        recipients = [r.strip() for r in recipients_raw.split(",") if r.strip()]
+        if not recipients:
+            logger.error("No valid email recipients configured")
+            raise RuntimeError("No valid email recipients configured")
+
+        msg = MIMEMultipart()
+        msg["From"] = email_sender
+        msg["To"] = ", ".join(recipients)
+        msg["Subject"] = f"Server Monitor Recovery - Resident {resident_id}"
+
+        body = f"""
+        <html>
+          <body>
+            <h2>Server Monitor Recovery - Resident {resident_id}</h2>
+            <p><strong>Resident:</strong> {resident_id}</p>
+            <p><strong>Status:</strong> Server functionality has been verified as stable.</p>
+            <p>
+              The WebDAV upload status and portal status have matched
+              consistently for the configured recovery window.
+            </p>
+            <p><strong>Timestamp:</strong> {now_utc_iso()}</p>
+          </body>
+        </html>
+        """
+
+        msg.attach(MIMEText(body, "html"))
+
+        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+            server.login(email_sender, email_password)
+            server.send_message(msg, to_addrs=recipients)
+
+        logger.info(f"Recovery email sent for resident {resident_id}")
+        return True
+
+    except Exception:
+        logger.exception("Failed to send recovery email")
         return False

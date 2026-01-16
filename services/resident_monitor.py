@@ -7,12 +7,17 @@ from core.storage import  upload_file
 from utils.json_utils import extract_resident_status, get_resident_status_from_file
 from services.state_manager import StateManager
 from core.portal import call_authenticated_api
-from services.notification_service import send_mismatch_email
+from services.notification_service import send_mismatch_email, send_recovery_email
 
 logger = logging.getLogger(__name__)
 
 EMAIL_PAUSE_HOURS = int(os.getenv("EMAIL_PAUSE", "1"))
 EMAIL_PAUSE_SEC = EMAIL_PAUSE_HOURS * 3600
+
+MISMATCH_THRESHOLD = int(os.getenv("MISMATCH_THRESHOLD", "10"))
+RECOVERY_THRESHOLD = int(os.getenv("RECOVERY_THRESHOLD", "10"))
+EMAIL_PAUSE_HOURS  = int(os.getenv("EMAIL_PAUSE", "10"))
+
 
 class ResidentMonitor:
     """Monitors a single resident's status."""
@@ -30,7 +35,10 @@ class ResidentMonitor:
         self.mismatch_count = 0
         self.last_email_ts: float | None = None
         self.state_manager = StateManager()
-        
+        self.alert_active = False
+        self.match_count = 0
+        self.a = 0
+
         # Paths
         self.upload_path = f"data/upload.json"
         self.download_path = f"data/download.json"
@@ -90,33 +98,56 @@ class ResidentMonitor:
                 logger.info(f"[{self.resident_id}] Initializing state with API status: {api_status}")
                 self.state_manager.save_state(self.resident_id, api_status)
                 return True
-
-            latest_state="test"
+            
+            """ss
+            # For testing purpose only
+            if self.a < 12:
+                latest_state = "test"
+                self.a += 1 
+            """
+     
             if api_status != latest_state:
-                self.mismatch_count += 1
-                logger.warning(
-                    f"[{self.resident_id}] Status mismatch ({self.mismatch_count}/6): "
-                    f"API={api_status}, State={latest_state}"
-                )
+                    # ---- MISMATCH ----
+                    self.mismatch_count += 1
+                    self.match_count = 0  # reset recovery streak
 
-                if self.mismatch_count >= 10:
-                    if self._can_send_email():
+                    logger.warning(
+                        f"[{self.resident_id}] Status mismatch "
+                        f"({self.mismatch_count}/{MISMATCH_THRESHOLD}) "
+                        f"API={api_status}, State={latest_state}"
+                    )
+
+                    if (
+                        self.mismatch_count >= MISMATCH_THRESHOLD
+                        and not self.alert_active
+                        and self._can_send_email()
+                    ):
                         logger.critical(
-                            f"[{self.resident_id}] Mismatch reached {self.mismatch_count} times. "
-                            f"Sending alert (pause={EMAIL_PAUSE_HOURS}h)."
+                            f"[{self.resident_id}] Server unhealthy. Sending alert."
                         )
                         send_mismatch_email(self.resident_id, self.mismatch_count)
                         self.last_email_ts = time.time()
-                    else:
-                        logger.warning(
-                            f"[{self.resident_id}] Email suppressed due to EMAIL_PAUSE "
-                            f"({EMAIL_PAUSE_HOURS}h)."
-                        )
+                        self.alert_active = True
 
             else:
-                logger.info(f"[{self.resident_id}] Status verified - match confirmed")
-                self.mismatch_count = 0
-                self.state_manager.save_state(self.resident_id, api_status)
+                # ---- MATCH ----
+                self.match_count += 1
+                self.mismatch_count = 0  # reset failure streak
+
+                logger.info(
+                    f"[{self.resident_id}] Status match "
+                    f"({self.match_count}/{RECOVERY_THRESHOLD})"
+                )
+
+                # Send recovery email ONLY if there was a prior alert
+                if self.alert_active and self.match_count >= RECOVERY_THRESHOLD:
+                    logger.info(
+                        f"[{self.resident_id}] Server recovered. Sending recovery email."
+                    )
+                    send_recovery_email(self.resident_id)
+                    self.alert_active = False
+                    self.match_count = 0
+
             
             return True
             
